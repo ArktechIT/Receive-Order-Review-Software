@@ -1166,6 +1166,8 @@ createHeader($displayId, $version, $previousLink);
 									}
 								}
 
+								//will add pattern here
+
 								//ROSEMIE 2020-feb-20 END
 								echo "<tr class='rowCount'>";	
 									if(in_array($processCodeFilterArray[$i],array(460,463)) and $_GET['country']==1)//added by rose 2019-08-24
