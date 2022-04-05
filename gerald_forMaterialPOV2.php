@@ -544,7 +544,10 @@
 					$lotNumber = $resultLotList['lotNumber'];
 					$dueDate = $resultLotList['recoveryDate'];
 					
-					generateScheduleItems($poId,array('start'=>$startDate,'dueDate'=>$dueDate),1,0);
+					if($_SESSION['idNumber']!='0346')
+					{
+						generateScheduleItems($poId,array('start'=>$startDate,'dueDate'=>$dueDate),1,0);
+					}
 				}
 			}			
 		}

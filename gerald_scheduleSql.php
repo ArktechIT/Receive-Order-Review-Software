@@ -816,12 +816,12 @@
 						$identifier = $resultLotList['identifier'];
 						$partLevel = $resultLotList['partLevel'];
 						
-						if($identifier==1)
+						$lotePartsArray = explode("-",$lotNumber);
+						if($identifier==1 OR $identifier==2)
 						{
-							$lotePartsArray = explode("-",$lotNumber);
 							if(count($lotePartsArray)==3)
 							{
-								if($partLevel==1)
+								if($partLevel==1 AND $identifier==1)
 								{
 									$sql = "SELECT id FROM ppic_workschedule WHERE lotNumber LIKE '".$lotNumber."' AND processCode = 459 AND status = 0 LIMIT 1";
 									$queryWorkSchedule = $db->query($sql);

@@ -727,7 +727,7 @@
 	$metalThickness = (isset($_POST['metalThickness'])) ? $_POST['metalThickness'] : '';
 	$baseWeight = (isset($_POST['baseWeight'])) ? $_POST['baseWeight'] : '';
 	$coatingWeight = (isset($_POST['coatingWeight'])) ? $_POST['coatingWeight'] : '';
-
+	
 	$sqlFilter = "";
 	$sqlFilterArray = array();
 	
@@ -821,47 +821,7 @@ $displayId = "3-8"; # RO LIST
 $version = "";
 $previousLink = "/".v."/1-14%20Received%20Order%20Processing/raymond_receivedOrderProcessing.php";
 createHeader($displayId, $version, $previousLink);
-
-$customerPOReview = (isset($_SESSION['customerPOReview'])) ? $_SESSION['customerPOReview'] : 'Arktech Phils.';
-
-$customerGet = (isset($_GET['customerGet'])) ? $_GET['customerGet'] : $customerPOReview;
-
-if($customerGet!='')
-{
-	$_SESSION['customerPOReview'] = $customerGet;
-	$processsCodes = ($_GET['country']==1) ? '459,460,463' : '459,565,563';
-	$sql = "
-		SELECT
-			DISTINCT b.customerAlias
-		FROM
-			view_workschedule as a
-			INNER JOIN
-				system_lotlist as b
-			ON b.poId = a.poId
-		WHERE
-			a.processCode IN(".$processsCodes.") AND
-			a.lotNumber!='19-08-2408'
-		ORDER BY 
-			b.customerAlias
-	";
-	$options = "<option></option>";
-	$queryCustomer = $db->query($sql);
-	if($queryCustomer AND $queryCustomer->num_rows > 0)
-	{
-		while($resultCustomer = $queryCustomer->fetch_assoc())
-		{
-			$customerAlias = $resultCustomer['customerAlias'];
-			$selected = ($customerAlias==$customerGet) ? 'selected' : '';
-			$options.= "<option {$selected}>{$customerAlias}</option>";
-		}
-	}
-	?>
-	<form id='formId' action=''></form>
-	<select name='customerGet' form='formId' onchange="this.form.submit()"><?php echo $options;?></select>
-	<?php
-}
 ?>
-
 <div id='divFullm' class="divFull text-center" style="background-color: #96D6F7; display: none">
     <img class="mx-auto animate__animated animate__backInDown" style="height: 300px; margin-top: 15%;" src="/V4/Others/Sam/img/samsam.png" alt="">
     <div class="w-100 text-center">
@@ -975,8 +935,6 @@ if($customerGet!='')
 						$customerAlias = $customerAliasQueryResult['customerAlias'];									
 					}
 				}
-
-				// if(in_array($customerId,[28])) continue;
 				
 				$answerDate = '';
 				$sql = "SELECT answerDate FROM system_lotlist WHERE poId = ".$poId." LIMIT 1";
@@ -1139,6 +1097,7 @@ if($customerGet!='')
 							<th><?php echo displayText('L1120');?></th> 
 							<th></th> 
 							<th></th> 
+							<th><?php echo displayText('L763')?></th> 
 						</tr>
 					</thead>
 					<tbody>
@@ -1167,8 +1126,6 @@ if($customerGet!='')
 										$roseNote = $getSysLotlistResult['note']."";
 									}
 								}
-
-								if($customerGet!='')	if(!in_array($customerAliasArray[$i],[$customerGet])) continue;
 
 								$withMatPo = 'No';
 								$loteArray = [];
@@ -1210,7 +1167,109 @@ if($customerGet!='')
 									}
 								}
 
-								//will add pattern here							
+								//will add pattern here
+								$noDeliveryExemption = 0;
+								if($_GET['country']==2 AND $customerAliasArray[$i]=='MRT')
+								{
+									$noDeliveryExemption = 1;
+								}
+								
+								$patternRadio = "N/A";
+								$partId = $patternId = 0;
+								$sql = "SELECT partId, patternId FROM ppic_lotlist WHERE lotNumber LIKE '".$lotNumberArray[$i]."' AND identifier = 1 LIMIT 1";
+								$queryLotList = $db->query($sql);
+								if($queryLotList AND $queryLotList->num_rows > 0)
+								{
+									$resultLotList = $queryLotList->fetch_assoc();
+									$partId = $resultLotList['partId'];
+									$patternId = $resultLotList['patternId'];
+									
+									$deliveryProcessCount = 0;
+									//~ $sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." AND (processCode = 144 OR 94)";
+									$sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." AND (processCode = 144 OR processCode = 94)";
+									$queryCheckDeliveryProcess = $db->query($sql);
+									if(($queryCheckDeliveryProcess AND $queryCheckDeliveryProcess->num_rows > 0) OR $noDeliveryExemption==1)
+									{
+										$deliveryProcessCount = $queryCheckDeliveryProcess->num_rows;
+										
+										$patternCount = $checkedFlag = 0;
+										$patternRadio = "";
+										$sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." ORDER BY patternId";
+										$queryPartProcess = $db->query($sql);
+										if($queryPartProcess AND $queryPartProcess->num_rows > 0)
+										{
+											$patternCount = $queryPartProcess->num_rows;
+
+											while($resultPartProcess = $queryPartProcess->fetch_assoc())
+											{
+												$checked = ($patternId==$resultPartProcess['patternId']) ? 'checked' : '';
+												if($queryPartProcess->num_rows > 1)
+												{
+													$checked = '';
+													
+													//~ if($patternId == 0)	$checked = '';
+													
+													if($deliveryProcessCount == 1)
+													{
+														$sql = "SELECT partId FROM cadcam_partprocess WHERE partId = ".$partId." AND patternId = ".$resultPartProcess['patternId']." AND processCode = 144 LIMIT 1";
+														$queryCheckDeliveryProcess = $db->query($sql);
+														if($queryCheckDeliveryProcess->num_rows > 0 AND $checkedFlag==0)
+														{
+															$checked = 'checked';
+															$checkedFlag = 1;
+															$patternId = $resultPartProcess['patternId'];
+															$sql = "UPDATE ppic_lotlist SET patternId = ".$patternId." WHERE lotNumber LIKE '".$lotNumberArray[$i]."' LIMIT 1";
+															$queryUpdate = $db->query($sql);
+														}
+													}
+												}
+												//~ if($_SESSION['idNumber']=='0346')
+												if($_SESSION['idNumber']==true)
+												{
+													$patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox2&partId=".$partId."&patternId=".$resultPartProcess['patternId']."&poId=".$poIdArray[$i]."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-po-id='".$poIdArray[$i]."' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='".$resultPartProcess['patternId']."' ".$checked." required form='formId2'>Pattern(".$resultPartProcess['patternId'].")</label>";
+												}
+												else
+												{
+													$patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox&partId=".$partId."&patternId=".$resultPartProcess['patternId']."&poId=".$poIdArray[$i]."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-po-id='".$poIdArray[$i]."' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='".$resultPartProcess['patternId']."' ".$checked." required form='formId2'>Pattern(".$resultPartProcess['patternId'].")</label>";
+													//~ $patternRadio .= "<label style='cursor:pointer;' onclick=\" openTinyBox('','','".$_SERVER['PHP_SELF']."','','type=modalBox&partId=".$partId."&patternId=".$resultPartProcess['patternId']."&'); \" title='Click to view process'><input class='patternClass' data-po-id='".$poIdArray[$i]."' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='".$resultPartProcess['patternId']."' ".$checked." required form='formId'>Pattern(".$resultPartProcess['patternId'].")</label>";
+												}												
+											}
+										}
+
+										if($finishedGoodStockFlag=="O")
+										{
+											//~ $patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox&partId=".$partId."&patternId=-1&inventoryId=".$inventoryId."&lotNumber=".$lotNumber."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-lot='".$lotNumber."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumber."' value='-1' ".$checked." required form='formId'>FG</label>";
+											//~ $fgCaption = "<span style='color:green;' >(FG)</span>";
+											
+											$patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox&partId=".$partId."&patternId=-1&poId=".$poIdArray[$i]."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='-1' ".$checked." required form='formId2'>FG</label>";
+											$sql = "UPDATE ppic_lotlist SET patternId = -1 WHERE lotNumber LIKE '".$lotNumberArray[$i]."' LIMIT 1";
+											$queryUpdate = $db->query($sql);
+										}
+									}
+									else
+									{
+										$sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." AND processCode = 353";
+										$queryCheckDeliveryProcess = $db->query($sql);
+										if($queryCheckDeliveryProcess AND $queryCheckDeliveryProcess->num_rows == 0)
+										{
+											$patternRadio = "No Delivery Process";
+											$noDeliveryProcessFlag = 1;
+											if($poNumberArray[$i]=='IPO 1058')	$noDeliveryProcessFlag = 0;//by leslie 2019-08-06
+											if($poNumberArray[$i]=='IPO 1070')	$noDeliveryProcessFlag = 0;//by leslie 2019-09-06
+											if($poNumberArray[$i]=='IPO 1089')	$noDeliveryProcessFlag = 0;//by leslie 2019-10-17
+											if($poNumberArray[$i]=='IPO 1166')	$noDeliveryProcessFlag = 0;//by leslie 2020-05-23
+											if($poNumberArray[$i]=='IPO 1174')	$noDeliveryProcessFlag = 0;//by leslie 2020-06-19
+											if($poNumberArray[$i]=='IPO 1180')	$noDeliveryProcessFlag = 0;//by leslie 2020-07-19
+											if($poNumberArray[$i]=='IPO 1190')	$noDeliveryProcessFlag = 0;//by leslie 2020-09-18
+											if($poNumberArray[$i]=='IPO 1203')	$noDeliveryProcessFlag = 0;//by leslie 2020-09-18
+											if($poNumberArray[$i]=='IPO 1204')	$noDeliveryProcessFlag = 0;//by leslie 2020-12-01
+											if($poNumberArray[$i]=='PHI21618')	$noDeliveryProcessFlag = 0;//by ikang 2021-06-11
+											if($poNumberArray[$i]=='IPO 1267')	$noDeliveryProcessFlag = 0;//by leslie 2021-06-11
+											if($poNumberArray[$i]=='IPO 1308')	$noDeliveryProcessFlag = 0;//by jane 2021-09-23
+										}
+									}
+								}								
+								
 
 								//ROSEMIE 2020-feb-20 END
 								echo "<tr class='rowCount'>";	
@@ -1254,6 +1313,7 @@ if($customerGet!='')
 									echo "<td>".$pdfDrawing."</td>"; 
 									echo "<td>".$roseNote."</td>"; 
 									echo "<td>".$withMatPo."</td>"; 
+									echo "<td>".$patternRadio."</td>"; 
 									
 				
 								echo "</tr>";
@@ -1273,6 +1333,7 @@ if($customerGet!='')
 							<th></th>
 							<th></th>
 							<th></th>		
+							<th></th>
 							<th></th>
 							<th></th>
 							<th></th>
@@ -1317,7 +1378,6 @@ if($customerGet!='')
 							<th><?php echo displayText('L1026')?></th>
 							<th><?php echo displayText('L1027')?></th>
 							<th><?php echo displayText('3-6','utf8',0,1,1)?></th>
-							<!-- <th><?php echo displayText('L763')?></th> -->
 							<th><?php echo displayText('L3642');//displayText('L763')?></th>
 							<th><?php echo displayText('L343');//displayText('L763')?></th>
 							<th><?php echo displayText('L3690');//displayText('L763')?></th>
@@ -1429,10 +1489,7 @@ if($customerGet!='')
                                     //~ if(in_array($poIdArray[$i],array('1476098')))//2021-07-17 leslie
                                     // if(in_array($poIdArray[$i],array('1477779')))//2021-07-27 leslie
                                     // if(in_array($poIdArray[$i],array('1478648')))//2021-08-16 mario / roldan/ princess
-                                    // if(in_array($poIdArray[$i],array('1483810','1485321')))//2021-10-29 roldan
-                                    // if(in_array($poIdArray[$i],array('1488782','1488783')))//2021-12-21 roldan
-                                    // if(in_array($poIdArray[$i],array('1491569')))//2022-03-23 roldan
-                                    if(in_array($poIdArray[$i],array('1489213')))//2022-04-02 roldan
+                                    if(in_array($poIdArray[$i],array('1483810')))//2021-10-29 roldan
 									{
 										$materialStockFlag="O";
 									}
@@ -1493,107 +1550,6 @@ if($customerGet!='')
 									}
 								}
 								// -------------------------- No Finished Good Stocks -------------------------								
-								
-								$noDeliveryExemption = 0;
-								if($_GET['country']==2 AND $customerAliasArray[$i]=='MRT')
-								{
-									$noDeliveryExemption = 1;
-								}
-								
-								$patternRadio = "N/A";
-								$partId = $patternId = 0;
-								$sql = "SELECT partId, patternId FROM ppic_lotlist WHERE lotNumber LIKE '".$lotNumberArray[$i]."' AND identifier = 1 LIMIT 1";
-								$queryLotList = $db->query($sql);
-								if($queryLotList AND $queryLotList->num_rows > 0)
-								{
-									$resultLotList = $queryLotList->fetch_assoc();
-									$partId = $resultLotList['partId'];
-									$patternId = $resultLotList['patternId'];
-									
-									$deliveryProcessCount = 0;
-									//~ $sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." AND (processCode = 144 OR 94)";
-									$sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." AND (processCode = 144 OR processCode = 94)";
-									$queryCheckDeliveryProcess = $db->query($sql);
-									if(($queryCheckDeliveryProcess AND $queryCheckDeliveryProcess->num_rows > 0) OR $noDeliveryExemption==1)
-									{
-										$deliveryProcessCount = $queryCheckDeliveryProcess->num_rows;
-										
-										$checkedFlag = 0;
-										$patternRadio = "";
-										$sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." ORDER BY patternId";
-										$queryPartProcess = $db->query($sql);
-										if($queryPartProcess AND $queryPartProcess->num_rows > 0)
-										{
-											while($resultPartProcess = $queryPartProcess->fetch_assoc())
-											{
-												$checked = ($patternId==$resultPartProcess['patternId']) ? 'checked' : '';
-												if($queryPartProcess->num_rows > 1)
-												{
-													$checked = '';
-													
-													//~ if($patternId == 0)	$checked = '';
-													
-													if($deliveryProcessCount == 1)
-													{
-														$sql = "SELECT partId FROM cadcam_partprocess WHERE partId = ".$partId." AND patternId = ".$resultPartProcess['patternId']." AND processCode = 144 LIMIT 1";
-														$queryCheckDeliveryProcess = $db->query($sql);
-														if($queryCheckDeliveryProcess->num_rows > 0 AND $checkedFlag==0)
-														{
-															$checked = 'checked';
-															$checkedFlag = 1;
-															$patternId = $resultPartProcess['patternId'];
-															$sql = "UPDATE ppic_lotlist SET patternId = ".$patternId." WHERE lotNumber LIKE '".$lotNumberArray[$i]."' LIMIT 1";
-															$queryUpdate = $db->query($sql);
-														}
-													}
-												}
-												//~ if($_SESSION['idNumber']=='0346')
-												if($_SESSION['idNumber']==true)
-												{
-													$patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox2&partId=".$partId."&patternId=".$resultPartProcess['patternId']."&poId=".$poIdArray[$i]."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-po-id='".$poIdArray[$i]."' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='".$resultPartProcess['patternId']."' ".$checked." required form='formId2'>Pattern(".$resultPartProcess['patternId'].")</label>";
-												}
-												else
-												{
-													$patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox&partId=".$partId."&patternId=".$resultPartProcess['patternId']."&poId=".$poIdArray[$i]."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-po-id='".$poIdArray[$i]."' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='".$resultPartProcess['patternId']."' ".$checked." required form='formId2'>Pattern(".$resultPartProcess['patternId'].")</label>";
-													//~ $patternRadio .= "<label style='cursor:pointer;' onclick=\" openTinyBox('','','".$_SERVER['PHP_SELF']."','','type=modalBox&partId=".$partId."&patternId=".$resultPartProcess['patternId']."&'); \" title='Click to view process'><input class='patternClass' data-po-id='".$poIdArray[$i]."' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='".$resultPartProcess['patternId']."' ".$checked." required form='formId'>Pattern(".$resultPartProcess['patternId'].")</label>";
-												}												
-											}
-										}
-										
-										if($finishedGoodStockFlag=="O")
-										{
-											//~ $patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox&partId=".$partId."&patternId=-1&inventoryId=".$inventoryId."&lotNumber=".$lotNumber."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-lot='".$lotNumber."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumber."' value='-1' ".$checked." required form='formId'>FG</label>";
-											//~ $fgCaption = "<span style='color:green;' >(FG)</span>";
-											
-											$patternRadio .= "<label style='cursor:pointer;' onclick=\" apiOpenModalBox({url:'".$_SERVER['PHP_SELF']."',post:'type=modalBox&partId=".$partId."&patternId=-1&poId=".$poIdArray[$i]."',mask:true,customFunction:function(){jsFunctions();}}) \" title='Click to view process'><input class='patternClass' data-lot='".$lotNumberArray[$i]."' data-parentlot='".$parentLot."' type='radio' name='patternId".$lotNumberArray[$i]."' value='-1' ".$checked." required form='formId2'>FG</label>";
-											$sql = "UPDATE ppic_lotlist SET patternId = -1 WHERE lotNumber LIKE '".$lotNumberArray[$i]."' LIMIT 1";
-											$queryUpdate = $db->query($sql);
-										}
-									}
-									else
-									{
-										$sql = "SELECT DISTINCT patternId FROM cadcam_partprocess WHERE partId = ".$partId." AND processCode = 353";
-										$queryCheckDeliveryProcess = $db->query($sql);
-										if($queryCheckDeliveryProcess AND $queryCheckDeliveryProcess->num_rows == 0)
-										{
-											$patternRadio = "No Delivery Process";
-											$noDeliveryProcessFlag = 1;
-											if($poNumberArray[$i]=='IPO 1058')	$noDeliveryProcessFlag = 0;//by leslie 2019-08-06
-											if($poNumberArray[$i]=='IPO 1070')	$noDeliveryProcessFlag = 0;//by leslie 2019-09-06
-											if($poNumberArray[$i]=='IPO 1089')	$noDeliveryProcessFlag = 0;//by leslie 2019-10-17
-											if($poNumberArray[$i]=='IPO 1166')	$noDeliveryProcessFlag = 0;//by leslie 2020-05-23
-											if($poNumberArray[$i]=='IPO 1174')	$noDeliveryProcessFlag = 0;//by leslie 2020-06-19
-											if($poNumberArray[$i]=='IPO 1180')	$noDeliveryProcessFlag = 0;//by leslie 2020-07-19
-											if($poNumberArray[$i]=='IPO 1190')	$noDeliveryProcessFlag = 0;//by leslie 2020-09-18
-											if($poNumberArray[$i]=='IPO 1203')	$noDeliveryProcessFlag = 0;//by leslie 2020-09-18
-											if($poNumberArray[$i]=='IPO 1204')	$noDeliveryProcessFlag = 0;//by leslie 2020-12-01
-											if($poNumberArray[$i]=='PHI21618')	$noDeliveryProcessFlag = 0;//by ikang 2021-06-11
-											if($poNumberArray[$i]=='IPO 1267')	$noDeliveryProcessFlag = 0;//by leslie 2021-06-11
-											if($poNumberArray[$i]=='IPO 1308')	$noDeliveryProcessFlag = 0;//by jane 2021-09-23
-											if($poNumberArray[$i]=='IPO 1369')	$noDeliveryProcessFlag = 0;//by Roldan M 2022-03-08
-										}
-									}
-								}
 								
 								$customerId = '';
 								$RosecustomerDeliveryDate = '';
@@ -1784,7 +1740,6 @@ if($customerGet!='')
 										}
 									echo "</td>";
 									echo "<td class='text-center'>".$materialComputationStatus."</td>";
-									// echo "<td class='text-center'>".$patternRadio."</td>";
 									echo "<td class='deliveryTypeClass' data-po-id='".$poIdArray[$i]."' title='Double Click to edit'>".$deliveryTypeCaption."</td>";
 									echo "<td class='dueDateClass' data-po-id='".$poIdArray[$i]."' title='Double Click to edit' style='color:".$color."'>".$str2."</td>";
 									
@@ -1824,7 +1779,6 @@ if($customerGet!='')
 							<th></th>
 							<th></th>
 							<th><input type='button' onclick="location.href='/<?php echo v; ?>/54 Automated Material Computation Software/ace_viewSummarizedComputation.php'" value="<?php echo displayText('L3726'); ?>"></th> 
-							<!-- <th></th> -->
 							<th></th>
 							<th></th>
 							<th></th>

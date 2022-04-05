@@ -67,6 +67,9 @@
 			
 			if(!isset($requirementArray[$arrayKey])) $requirementArray[$arrayKey] = 0;
 			$requirementArray[$arrayKey] += $workingQuantity;
+
+            if(!isset($lotNumberArray[$arrayKey])) $lotNumberArray[$arrayKey] = array();
+            $lotNumberArray[$arrayKey][] = $lotNumber;			
 			
 			$tableContent .= "
 				<tr class='internalTrClass' data-index='".$count."'>
@@ -122,6 +125,23 @@
 					$sqlInsert = $sqlMain." ".implode(",",$sqlValuesArray);
 					$queryUpdate = $db->query($sqlInsert);
 				}
+
+				$sql = "SELECT accessoryComputationId, CONCAT(accessoryNumber,'`',accessoryName,'`',accessoryDescription,'`',customerAlias) as uniqueKey FROM ppic_accessorycomputation WHERE lotNumber = ''";
+				$queryAccessoryComputation = $db->query($sql);
+				if($queryAccessoryComputation AND $queryAccessoryComputation->num_rows > 0)
+				{
+					while($resultAccessoryComputation = $queryAccessoryComputation->fetch_assoc())
+					{
+						$accessoryComputationId = $resultAccessoryComputation['accessoryComputationId'];
+						$uniqueKey = $resultAccessoryComputation['uniqueKey'];
+
+						$sql = "INSERT INTO ppic_accessorycomputationdetails
+										(	`accessoryComputationId`,		`lotNumber`,	`workingQuantity`)
+								SELECT 		'".$accessoryComputationId."',	`lotNumber`,	`workingQuantity`
+								FROM		ppic_lotlist WHERE lotNumber IN('".implode("','",$lotNumberArray[$uniqueKey])."')";
+						$queryInsert = $db->query($sql);						
+					}
+				}				
 				
 				header('location:gerald_roReviewAccessoryComputation.php');
 				exit(0);

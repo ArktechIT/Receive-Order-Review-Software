@@ -238,7 +238,8 @@ if($query->num_rows > 0)
                         $matLength = 2500;
                         $matWidth = 1250;
                     }
-                    else if(in_array($metalThickness, array(0.7,0.5,0.71,0.8,2.5,1.2)) AND $materialType == '6082T6')
+                    // else if(in_array($metalThickness, array(0.7,0.5,0.71,0.8,2.5,1.2)) AND $materialType == '6082T6')
+                    else if(in_array($metalThickness, array(0.7,0.5,0.71,0.8,2.5,1.2)) AND stristr($materialType,'6082T6')!==FALSE)
                     {
                         //~ $matLength = 2000;
                         //~ $matWidth = 1000;
@@ -255,7 +256,8 @@ if($query->num_rows > 0)
                             $matWidth = 1000;
                         }
                     }
-                    else if(in_array($metalThickness, array(1.5,3.0,1.0,2.0)) AND $materialType == '6082T6')
+                    // else if(in_array($metalThickness, array(1.5,3.0,1.0,2.0)) AND $materialType == '6082T6')
+                    else if(in_array($metalThickness, array(1.5,3.0,1.0,2.0)) AND stristr($materialType,'6082T6')!==FALSE)
                     {
                         // if($blanking == 'Laser')
                         // {
@@ -282,7 +284,8 @@ if($query->num_rows > 0)
                         }
                         
                     }
-                    else if($metalThickness == 0.9 AND $materialType == '6082T6')
+                    // else if($metalThickness == 0.9 AND $materialType == '6082T6')
+                    else if($metalThickness == 0.9 AND stristr($materialType,'6082T6')!==FALSE)
                     {
                         $matLength = 1524;
                         $matWidth = 609;
@@ -337,6 +340,17 @@ if($query->num_rows > 0)
                             $matLength = $resultMaterial['length'];
                             $matWidth = $resultMaterial['width'];
                         }
+						else
+						{
+							$sql = "SELECT requiredLength, requiredWidth FROM cadcam_parts WHERE materialSpecId = ".$materialSpecId." AND treatmentId = ".$treatmentId." AND requiredLength >= ".$x." AND requiredWidth >= ".$y." LIMIT 1";
+							$queryMaterial = $db->query($sql);
+							if($queryMaterial AND $queryMaterial->num_rows > 0)
+							{
+								$resultMaterial = $queryMaterial->fetch_assoc();
+								$matLength = $resultMaterial['requiredLength'];
+								$matWidth = $resultMaterial['requiredWidth'];
+							}
+						}
                     }
                 }
             }
@@ -446,7 +460,7 @@ if($query->num_rows > 0)
         $nestedData[] = $bendStatus;
         $nestedData[] = $pvcStatus;
         $nestedData[] = $blankingProcess;
-        $nestedData[] = $materialLengthInput;
+        $nestedData[] = $materialLengthInput.$asdasd;
         $nestedData[] = $materialWidthInput;
         //~ $nestedData[] = $qtyPerSheet;
         $nestedData[] = $qtyPerSheetInput;

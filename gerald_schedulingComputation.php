@@ -42,7 +42,7 @@
 
 		//~ generateScheduleItems($poIdArray,'',0,0);
 		
-		$sql = "SELECT lotNumber, poId FROM ppic_lotlist WHERE poId IN(".implode(",",$poIdArray).") AND identifier = 1 AND partLevel = 1";
+		$sql = "SELECT lotNumber, poId, patternId FROM ppic_lotlist WHERE poId IN(".implode(",",$poIdArray).") AND identifier = 1 AND partLevel = 1";
 		$queryLotList = $db->query($sql);
 		if($queryLotList AND $queryLotList->num_rows > 0)
 		{
@@ -50,6 +50,33 @@
 			{
 				$lotNumber = $resultLotList['lotNumber'];
 				$poId = $resultLotList['poId'];
+				$patternId = $resultLotList['patternId'];
+
+				if($_SESSION['idNumber']=='0346')
+				{
+					if($patternId=='-1')
+					{
+						$sql = "SELECT FROM system_finishedgoodbooking WHERE lotNumber LIKE '{$lotNumber}' LIMIT 1";
+						$queryFGBooking = $db->query($sql);
+						if($queryFGBooking AND $queryFGBooking->num_rows > 0)
+						{
+							$lotsArray = [];
+							$sql = "SELECT lotNumber FROM ppic_lotlist WHERE poId = ".$poId." AND identifier IN(1,2)";
+							$queryLot = $db->query($sql);
+							if($queryLot AND $queryLot->num_rows > 0)
+							{
+								while($resultLot = $queryLot->fetch_assoc())
+								{
+									$lotsArray[] = $resultLot['lotNumber'];
+								}
+							}
+							$sql = "DELETE FROM ppic_workschedule WHERE lotNumber IN('".implode("','",$lotsArray)."') AND processOrder > 0";
+							$queryDelete = $db->query($sql);
+							$sql = "UPDATE ppic_workschedule SET status = 0, actualFinish = '0000-00-00', employeeId = '' WHERE lotNumber IN('".implode("','",$lotsArray)."') AND processCode IN(324,459) AND processOrder = 0 LIMIT 2";
+							$queryUpdate = $db->query($sql);
+						}
+					}
+				}
 				
 				$sql = "SELECT id FROM ppic_workschedule WHERE lotNumber LIKE '".$lotNumber."' AND processCode = 324 AND status = 0 LIMIT 1";
 				$queryWorkSchedule = $db->query($sql);

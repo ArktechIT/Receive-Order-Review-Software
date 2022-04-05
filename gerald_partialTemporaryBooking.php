@@ -36,14 +36,14 @@
 		// ----------------------------------------------------------------------------------------------------------------------------------------------------------
 		
 		// ----------------------------------------- Insert Lot Data Into ppic_lotlist ----------------------------------------------------
-		$sql="SELECT poId, partId, parentLot, partLevel, workingQuantity, identifier, status, poContentId FROM ppic_lotlist where lotNumber like '".$lot."' AND workingQuantity > ".$quantity." LIMIT 1";	
+		$sql="SELECT poId, partId, parentLot, partLevel, workingQuantity, identifier, status, poContentId, patternId FROM ppic_lotlist where lotNumber like '".$lot."' AND workingQuantity > ".$quantity." LIMIT 1";	
 		$lotQuery=$db->query($sql);
 		if($lotQuery->num_rows > 0)
 		{
 			$lotQueryResult = $lotQuery->fetch_assoc();
 			
 			$newQuantity = $lotQueryResult['workingQuantity']-$quantity;
-			$sql = "insert into ppic_lotlist (lotNumber, poId , partId, parentLot, partLevel, workingQuantity, identifier, dateGenerated, status, bookingStatus, poContentId) values ('".$newLotNumber."', ".$lotQueryResult['poId'].", ".$lotQueryResult['partId'].", '".$lotQueryResult['parentLot']."', ".$lotQueryResult['partLevel'].", ".$newQuantity.", ".$lotQueryResult['identifier'].", now(), ".$lotQueryResult['status'].", 1, '".$lotQueryResult['poContentId']."')";
+			$sql = "insert into ppic_lotlist (lotNumber, poId , partId, parentLot, partLevel, workingQuantity, identifier, dateGenerated, status, bookingStatus, poContentId, patternId) values ('".$newLotNumber."', ".$lotQueryResult['poId'].", ".$lotQueryResult['partId'].", '".$lotQueryResult['parentLot']."', ".$lotQueryResult['partLevel'].", ".$newQuantity.", ".$lotQueryResult['identifier'].", now(), ".$lotQueryResult['status'].", 1, '".$lotQueryResult['poContentId']."', '".$lotQueryResult['patternId']."')";
 			
 			$query = $db->query($sql);
 			// ---------------------------------------------------------------------------------------------------------------------------------
@@ -100,7 +100,7 @@
 				$processSection = $result['processSection'];
 				
 				$insert = "INSERT INTO `system_machineWorkschedule`(`workScheduleId`, `machineId`, `idNumber`, `sectionId`, `inputDate`, `inputTime`, `status`, `printStatus`) VALUES (".$id.",0,'".$employeeId."',".$processSection.",NOW(),NOW(),0,0)";
-				$insertQuery = $db->query($insert);
+				// $insertQuery = $db->query($insert);
 			}
 		}
 		

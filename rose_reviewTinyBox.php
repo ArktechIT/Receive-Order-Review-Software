@@ -26,7 +26,8 @@ if(isset($_POST['submitName']) AND $_POST['action'] == 'Add')
 	}
 	
 	//~ header('location:rose_roreviewSoftwareTest.php');
-	header('location:rose_roreviewSoftware.php');
+	// header('location:rose_roreviewSoftware.php');
+	header('location:gerald_roReviewChangePattern.php');
 }
 else if(isset($_POST['submitName']) AND $_POST['action'] == 'Delete')
 {
