@@ -767,30 +767,8 @@
 		#sam{
 			display: none !important;
 		}
-        #divFull{
-            display: block !important;
-            position: fixed;
-            top: 0px;
-            left: 0px;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-        }
     }
     @media only screen and (max-device-width: 568px) {
-        #divFull{
-            display: none !important;
-        }
-        #divFullm {
-            display: block !important;
-            position: fixed;
-            top: 0px;
-            left: 0px;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-           
-        }
     }
 	@media only screen and (min-device-width: 481px) and (max-device-width: 1024px) and (orientation:landscape) {
 		#sam{
@@ -862,23 +840,6 @@ if($customerGet!='')
 }
 ?>
 
-<div id='divFullm' class="divFull text-center" style="background-color: #96D6F7; display: none">
-    <img class="mx-auto animate__animated animate__backInDown" style="height: 300px; margin-top: 15%;" src="/V4/Others/Sam/img/samsam.png" alt="">
-    <div class="w-100 text-center">
-        <h5 class="text-muted fw-bolder">Sorry... This page is not available for mobile view.</h5>
-    </div>
-    <div class="w-100 text-center mt-5">
-        <h5 class="text-muted fw-bolder">Redirecting to main menu...</h5>
-        <h3 class="text-muted fw-bolder animate__animated animate__fadeInDown animate__infinite" id='bilang'></h3>
-    </div>
-</div>
-<div id='divFull' class="divFull text-center" style="background-color: #96D6F7; display: none;">
-    <img class="mx-auto animate__animated animate__rotateOutDownLeft animate__infinite" style="height: 300px; margin-top: 5%; overflow: auto;" src="/V4/Others/Sam/img/rotate2.png" alt="">
-    <img class="mx-auto" style="height: 300px; margin-top: 32%; margin-left: -20% !important;" src="/V4/Others/Sam/img/rotate1.png" alt="">
-    <div class="w-100 text-center">
-        <h3 class="text-muted fw-bolder">Rotate the device for best view.</h3>
-    </div>
-</div>
 <div id="sam">
 	<div class="api-row">
 		<!-- --------------------------------- Left Buttons ---------------------------------------- -->
@@ -2011,26 +1972,6 @@ if($customerGet!='')
 <script src="/<?php echo v; ?>/Common Data/Libraries/Javascript/Table Filter/tablefilter_all_min.js" language="javascript" type="text/javascript"></script>
 <script type="text/javascript" src="/<?php echo v; ?>/Common Data/Libraries/Javascript/Table Filter/sorttable.js"></script>
 <script src="/<?php echo v; ?>/Common Data/Libraries/Javascript/Table Filter/scroll3.js"></script>
-<script>
-	if($('#divFullm').css('display') == 'block')
-	{
-		babalik();
-	}
-		
-	function babalik(){
-		var bilang = document.getElementById('bilang');
-		var counter = 6;
-		var interval = setInterval(()=> {
-			counter--;
-			bilang.innerText =counter;
-			if (counter == 0) {
-				clearInterval(interval);
-				location.href="/V4/1-15%20Sales%20Software/raymond_salesSoftware.php";
-			}
-		}, 1000);
-		
-	}
-</script>
 <script type="text/javascript">var sizeColWidths = function() {$('#table10 td, #table10 th').css('width', 'auto');$('#table10').removeClass('scrollableTable');$('#table10 tbody').css('width', 'auto');var i=0, colWidth=new Array();$('#table10 th').each(function() {colWidth[i++] = $(this).outerWidth();});$('#table10 tr').each(function() {var i=0;$('th, td', this).each(function() {$(this).css('width', colWidth[i++] + 'px');})});$('#table10').addClass('scrollableTable');$('#table10 tbody').css('width', ($('#table10 thead').width() + 20 ) +'px');};$(document).ready(function() {sizeColWidths()});$(window).resize(function() {sizeColWidths()});</script>
 <script language="javascript" type="text/javascript">
 	var totRowIndex = tf_Tag(tf_Id('table10'),"tr").length;
