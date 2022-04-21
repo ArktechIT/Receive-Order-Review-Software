@@ -881,6 +881,7 @@ if($customerGet!='')
 			$subconFlagArray = array();
 			$bendFlagArray = array();		
 			$answerDateArray = array();		
+			$recoveryDateArray = array();		
 			
 			//$sql = "SELECT lotNumber, targetFinish FROM view_workschedule WHERE processCode IN(459) AND status = 0"; // edited by rose 2019-08-24
 			$processsCodes = ($_GET['country']==1) ? '459,460,463' : '459,565,563';
@@ -939,13 +940,14 @@ if($customerGet!='')
 
 				// if(in_array($customerId,[28])) continue;
 				
-				$answerDate = '';
-				$sql = "SELECT answerDate FROM system_lotlist WHERE poId = ".$poId." LIMIT 1";
+				$answerDate = $recoveryDate = '';
+				$sql = "SELECT answerDate, recoveryDate FROM system_lotlist WHERE poId = ".$poId." LIMIT 1";
 				$queryLotList = $db->query($sql);
 				if($queryLotList AND $queryLotList->num_rows > 0)
 				{
 					$resultLotList = $queryLotList->fetch_assoc();
 					$answerDate = $resultLotList['answerDate'];
+					$recoveryDate = $resultLotList['recoveryDate'];
 				}
 				
 				$materialSpecification = '';
@@ -1070,6 +1072,7 @@ if($customerGet!='')
 				$partIdListArray[] = $partIdList;	
 				$partNameArray[] = $partNameList;	
 				$answerDateArray[] = $answerDate;	
+				$recoveryDateArray[] = $recoveryDate;	
 			}
 				
 				
@@ -1394,7 +1397,8 @@ if($customerGet!='')
                                     // if(in_array($poIdArray[$i],array('1488782','1488783')))//2021-12-21 roldan
                                     // if(in_array($poIdArray[$i],array('1491569')))//2022-03-23 roldan
                                     // if(in_array($poIdArray[$i],array('1489213')))//2022-04-02 roldan
-                                    if(in_array($poIdArray[$i],array('1493968','1493959')))//2022-04-13 roldan
+                                    // if(in_array($poIdArray[$i],array('1493968','1493959')))//2022-04-13 roldan
+									if(in_array($poIdArray[$i],array(1494129,1494136,1494143)))//2022-04-20 roldan
 									{
 										$materialStockFlag="O";
 									}
@@ -1558,15 +1562,14 @@ if($customerGet!='')
 								}
 								
 								$customerId = '';
-								$RosecustomerDeliveryDate = $recoveryDate = '';
-								$sql = "SELECT customerId,customerDeliveryDate, recoveryDate FROM sales_polist WHERE poId = ".$poIdArray[$i]." LIMIT 1";
+								$RosecustomerDeliveryDate = '';
+								$sql = "SELECT customerId,customerDeliveryDate  FROM sales_polist WHERE poId = ".$poIdArray[$i]." LIMIT 1";
 								$queryPoList = $db->query($sql);
 								if($queryPoList AND $queryPoList->num_rows > 0)
 								{
 									$resultPoList = $queryPoList->fetch_assoc();
 									$customerId = $resultPoList['customerId'];
 									$RosecustomerDeliveryDate = $resultPoList['customerDeliveryDate'];
-									$recoveryDate = $resultPoList['recoveryDate'];
 								}
 								
 								if($deliveryType==0)
@@ -1673,7 +1676,7 @@ if($customerGet!='')
 											{
 												$str2 = $tempDueDate;
 											}*/
-											$str2 = $recoveryDate;
+											$str2 = $recoveryDateArray[$i];
 											$sql = "UPDATE ppic_roreviewdatatemp SET dueDate = '".$str2."', deldate = '".$RosecustomerDeliveryDate."', answerDate = '".$answerDateArray[$i]."', deliveryType = '".$deliveryType."' WHERE poId = ".$poIdArray[$i]." LIMIT 1";
 											//$sql = "UPDATE ppic_roreviewdatatemp SET dueDate = '".$str2."', deliveryType = '".$deliveryType."' WHERE poId = ".$poIdArray[$i]." LIMIT 1";
 											$queryUpdate = $db->query($sql);
